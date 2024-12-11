@@ -18,15 +18,35 @@ jobs:
       with:
         fetch-dev: 0
 
-
+    - name: Git checkout sematic version
+      uses: paulhatch/semantic-version@v4.0.3
+      with: 
+        major_pattern: "major:"
+        minor_pattern: "feat:"
+        format: "${major}.${minor}.${patch}-prerelease${increment}"
+      id: version
+      
     - name: Docker login
       env:   
         DOCKER_USER: ${{secrets.DOCKER_USER}}
         DOCKER_PASS: ${{secrets.DOCKER_PASS}}
       run: |
-          echo "Iniciando login"
           docker login -u $DOCKER_USER -p $DOCKER_PASS
-          echo "Fin del login"
+
+    - name: Build Docker Image
+      env: 
+        NEW_VERSION: ${{steps.version.outputs.version}}
+      run: |
+        docker build -t angelalcarazdevart/docker-graphql:$NEW_VERSION .
+        docker build -t angelalcarazdevart/docker-graphql:latest .
+
+    - name: Push Docker Image
+      env: 
+        NEW_VERSION: ${{steps.version.outputs.version}}
+      run: |
+        docker push angelalcarazdevart/docker-graphql:$NEW_VERSION
+        docker push angelalcarazdevart/docker-graphql:latest
+      
       
           
           
